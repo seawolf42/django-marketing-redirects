@@ -41,7 +41,7 @@ test.flake8:
 
 PHONY: test.unittests
 test.unittests:
-	PYTHONPATH=${PYTHONPATH} python setup.py test
+	PYTHONPATH=${PYTHONPATH} python runtests.py tests
 
 PHONY: test
 test: test.flake8 test.unittests
