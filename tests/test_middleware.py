@@ -6,9 +6,12 @@ from django.conf import settings
 from django.contrib.redirects.models import Redirect
 from django.contrib.sites.models import Site
 
+from django_marketing_redirects import models
+
 
 OLD_PATH = '/a/'
-NEW_PATH = '/b/?x=specified'
+NEW_PATH_BASE = '/b/'
+NEW_PATH = NEW_PATH_BASE + '?x=specified'
 
 REQUESTS = dict(
     no_params=OLD_PATH,
@@ -23,6 +26,10 @@ class BaseMiddlewareTest(TestCase):
     def setUp(self, behavior):
         self.site = Site.objects.get(pk=settings.SITE_ID)
         self.redirect = Redirect.objects.create(site=self.site, old_path=OLD_PATH, new_path=NEW_PATH)
+        self.item = models.RedirectWithQueryParams.objects.create(
+            redirect=self.redirect,
+            query_param_behavior=behavior,
+        )
 
 
 @modify_settings(MIDDLEWARE={'append': 'django_marketing_redirects.middleware.RedirectFallbackMiddleware'})
@@ -47,3 +54,51 @@ class RedirectRemoveQueryParamsTest(BaseMiddlewareTest):
     def test_x_and_y(self):
         response = self.client.get(REQUESTS['x_and_y'])
         self.assertRedirects(response, NEW_PATH, status_code=301, target_status_code=404)
+
+
+@modify_settings(MIDDLEWARE={'append': 'django_marketing_redirects.middleware.RedirectFallbackMiddleware'})
+@override_settings(APPEND_SLASH=False, ROOT_URLCONF='tests.urls', SITE_ID=1)
+class RedirectRedirectWinsQueryParamsTest(BaseMiddlewareTest):
+
+    def setUp(self):
+        super(RedirectRedirectWinsQueryParamsTest, self).setUp(behavior='REDIRECT_WINS')
+
+    def test_no_params(self):
+        response = self.client.get(REQUESTS['no_params'])
+        self.assertRedirects(response, NEW_PATH, status_code=301, target_status_code=404)
+
+    def test_x_only(self):
+        response = self.client.get(REQUESTS['x_only'])
+        self.assertRedirects(response, NEW_PATH, status_code=301, target_status_code=404)
+
+    def test_y_only(self):
+        response = self.client.get(REQUESTS['y_only'])
+        self.assertRedirects(response, NEW_PATH_BASE + '?y=requested&x=specified', status_code=301, target_status_code=404)
+
+    def test_x_and_y(self):
+        response = self.client.get(REQUESTS['x_and_y'])
+        self.assertRedirects(response, NEW_PATH + '&y=requested', status_code=301, target_status_code=404)
+
+
+@modify_settings(MIDDLEWARE={'append': 'django_marketing_redirects.middleware.RedirectFallbackMiddleware'})
+@override_settings(APPEND_SLASH=False, ROOT_URLCONF='tests.urls', SITE_ID=1)
+class RedirectUserWinsQueryParamsTest(BaseMiddlewareTest):
+
+    def setUp(self):
+        super(RedirectUserWinsQueryParamsTest, self).setUp(behavior='QUERY_WINS')
+
+    def test_no_params(self):
+        response = self.client.get(REQUESTS['no_params'])
+        self.assertRedirects(response, NEW_PATH, status_code=301, target_status_code=404)
+
+    def test_x_only(self):
+        response = self.client.get(REQUESTS['x_only'])
+        self.assertRedirects(response, NEW_PATH_BASE + '?x=requested', status_code=301, target_status_code=404)
+
+    def test_y_only(self):
+        response = self.client.get(REQUESTS['y_only'])
+        self.assertRedirects(response, NEW_PATH_BASE + '?x=specified&y=requested', status_code=301, target_status_code=404)
+
+    def test_x_and_y(self):
+        response = self.client.get(REQUESTS['x_and_y'])
+        self.assertRedirects(response, NEW_PATH_BASE + '?x=requested&y=requested', status_code=301, target_status_code=404)
