@@ -17,13 +17,13 @@ endif
 #
 
 PHONY: clean.build
-clean-build:
+clean.build:
 	rm -rf build/
 	rm -rf dist/
 	rm -rf *.egg-info
 
 PHONY: clean.pyc
-clean-pyc:
+clean.pyc:
 	find . -name '*.pyc' -delete
 	find . -name '*.pyo' -delete
 
