@@ -1,3 +1,5 @@
+import sys
+
 from collections import OrderedDict
 
 from django.conf import settings
@@ -5,12 +7,15 @@ from django.contrib.redirects import middleware as redirects_middleware
 from django.contrib.redirects.models import Redirect
 from django.contrib.sites.shortcuts import get_current_site
 
-try:
+if sys.version_info[0] < 3:
     # python 2
-    import urlparse
-except ModuleNotFoundError:
+    import urlparse as urlparse
+    import urllib
+    urlencode = urllib.urlencode
+else:
     # python 3
     import urllib.parse as urlparse
+    urlencode = urlparse.urlencode
 
 
 class RedirectFallbackMiddleware(redirects_middleware.RedirectFallbackMiddleware):
@@ -58,7 +63,7 @@ class RedirectFallbackMiddleware(redirects_middleware.RedirectFallbackMiddleware
                     response_params.update(request_params)
                     params = response_params
                 if len(params) > 0:
-                    return self.response_redirect_class(request_path.path + '?' + urlparse.urlencode(params))
+                    return self.response_redirect_class(request_path.path + '?' + urlencode(params))
             return self.response_redirect_class(r.new_path)
 
         # No redirect was found. Return the response.
