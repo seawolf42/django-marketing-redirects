@@ -15,7 +15,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 
 install_dependencies = (
-    'Django>=1.8' + ',<1.11.99' if sys.version_info[0] < 3 else '',
+    'Django>=1.8' + (',<1.11.99' if sys.version_info[0] < 3 else ''),
 )
 
 
