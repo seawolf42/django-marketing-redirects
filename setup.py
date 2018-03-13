@@ -48,4 +48,5 @@ setup(
     ],
     install_requires=install_dependencies,
     tests_require=install_dependencies + ('mock',),
+    test_suite='runtests.run_tests',
 )
