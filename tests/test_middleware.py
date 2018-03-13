@@ -2,6 +2,8 @@ from django.test import TestCase
 from django.test import modify_settings
 from django.test import override_settings
 
+import sys
+
 from collections import OrderedDict
 
 from django.conf import settings
@@ -10,12 +12,15 @@ from django.contrib.sites.models import Site
 
 from django_marketing_redirects import models
 
-try:
+if sys.version_info[0] < 3:
     # python 2
     import urlparse
-except ModuleNotFoundError:
+    import urllib
+    urlencode = urllib.urlencode
+else:
     # python 3
     import urllib.parse as urlparse
+    urlencode = urlparse.urlencode
 
 
 OLD_PATH = '/a/'
@@ -48,11 +53,11 @@ class BaseMiddlewareTest(TestCase):
         if y:
             expected_params['y'] = y
         if len(expected_params) > 0:
-            expected_url += '?' + urlparse.urlencode(expected_params)
+            expected_url += '?' + urlencode(expected_params)
         received_url = urlparse.urlsplit(response.url)
         if received_url.query:
             received_params = OrderedDict(sorted(urlparse.parse_qsl(received_url.query)))
-            received_url = received_url.path + '?' + urlparse.urlencode(received_params)
+            received_url = received_url.path + '?' + urlencode(received_params)
         self.assertEqual(received_url, expected_url)
         self.assertRedirects(response, response.url, status_code=301, target_status_code=404)
 
