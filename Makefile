@@ -37,7 +37,7 @@ clean: clean.build clean.pyc
 
 PHONY: test.flake8
 test.flake8:
-	flake8 setup.py django-marketing-redirects
+	flake8 .
 
 PHONY: test.unittests
 test.unittests:
