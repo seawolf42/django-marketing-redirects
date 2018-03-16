@@ -41,7 +41,7 @@ test.flake8:
 
 PHONY: test.unittests
 test.unittests:
-	PYTHONPATH=${PYTHONPATH} python runtests.py tests
+	${VIRTUAL_ENV}/bin/python runtests.py tests
 
 PHONY: test
 test: test.flake8 test.unittests
@@ -55,11 +55,11 @@ PHONY: docs
 docs:
 	pandoc -o README.rst README.md
 
-PHONY: sdist
-sdist: docs
+PHONY: package
+package: clean docs
 	python setup.py sdist
 
 PHONY: release
-release: clean sdist
+release: package
 	python setup.py sdist upload
 	python setup.py bdist_wheel upload
